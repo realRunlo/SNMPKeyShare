@@ -66,4 +66,9 @@ func generate_random_matrix(size int) [][]int {
     return matrix
 }
 
+// FM matrix mapping
+func fm(fm_matrix [][]int,line_index int,column_index int) int {
+    return fm_matrix[line_index-MIN_VAL_FM][column_index-MIN_VAL_FM]
+}
+
 
