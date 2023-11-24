@@ -1,0 +1,6 @@
+{
+    "port": 9595,
+    "master_key": "abcdefghijklmn",
+    "update_interval": 10,
+    "expire_interval": 10
+}
