@@ -2,11 +2,27 @@ package main
 
 import (
     "os"
-     "github.com/realRunlo/SNMPKeyShare/pkg/agent/parser"  
-     log "github.com/sirupsen/logrus"
-     km "github.com/realRunlo/SNMPKeyShare/pkg/agent/keyManagement" 
+    "flag"
+    "fmt"
+    "github.com/realRunlo/SNMPKeyShare/pkg/agent/parser"  
+    log "github.com/sirupsen/logrus"
+    km "github.com/realRunlo/SNMPKeyShare/pkg/agent/keyManagement" 
 )
 
+// 126 - 33 + 1 = 94 - range of visable ASCII chars
+const FM_SIZE int = 94
+// Agent server configurations
+var configs parser.AgentConf
+// FM Matrix
+var fm_matrix [][]int32 
+
+func customUsage(){
+    fmt.Println("usage: agent [-h] [-f <path>]")
+    fmt.Println("These are common commands used:")
+    flag.PrintDefaults()
+}
+
+// Init function (runs before main)
 func init() {
 
     // Text format
@@ -17,26 +33,41 @@ func init() {
     log.SetOutput(os.Stdout)
 
     // Only log the warning severity or above.
-    log.SetLevel(log.TraceLevel)
+    log.SetLevel(log.InfoLevel)
+    
+    // Set flags usage output
+    flag.Usage = customUsage
+
+    // Default agent configurations
+    configs.Port = 9595
+    configs.Master_key = "abcdefghijklmn"
+    configs.Update_interval = 10
+    configs.Expire_interval = 10
+
+    fm_matrix = km.Generate_random_matrix(FM_SIZE)
+    log.Info("FM matrix generated")
 }
 
-// 126 - 33 + 1 = 94 - range of visable ASCII chars
-const FM_SIZE int = 94
 
 func main() {
-     // Generate fm matrix on another thread
-    fm_channel := make(chan [][]int32)
-    go func() {
-	 fm_channel <- km.Generate_random_matrix(FM_SIZE)
-	 log.Info("FM matrix generated")
-    }()
-    // Parse config file
-    var confs parser.AgentConf
-    confs = parser.Parse_config_file("../../etc/agentConf.json")
+    // CLI parser - flags parser
+    config_file := flag.String("F","default", "Agent configuration file\n	Example:\n"+parser.Config_example())
+    debug_mode := flag.Bool("D",false,"Enable debug mode")
+    flag.Parse()
+    
+    if *debug_mode {
+	 // Enable debug mode
+	 log.SetLevel(log.DebugLevel)	
+    }
 
-    var fm_matrix [][]int32 = <-fm_channel
+    if *config_file == "default"{
+	log.Info("Using default agent configurations")
+    }else{
+	// Parse config file
+	configs = parser.Parse_config_file(*config_file)
+    }
 
-    var z = km.Generate_matrix(fm_matrix,confs.Master_key)
+    var z = km.Generate_matrix(fm_matrix,configs.Master_key)
     var updated_z = km.Update_matrix(z)
     km.Keygen(fm_matrix,updated_z,1)
 }

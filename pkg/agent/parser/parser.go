@@ -12,6 +12,16 @@ type AgentConf struct{
     Update_interval int  //matrix update interval (seconds)
     Expire_interval int //key expire interval 	(seconds)
 }
+func Config_example() string{
+
+    return "	{\n"+
+    "		\"port\": 9595,\n" +
+    "		\"master_key\": \"abcdefghijklmn\",\n" +
+    "		\"update_interval\": 10,\n" +
+    "		\"expire_interval\": 10\n" +
+    "	}\n" +
+    "Default configurations are loaded if flag is not used"
+}
 
 func Parse_config_file(filename string) AgentConf{
     
